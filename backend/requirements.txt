@@ -1,0 +1,17 @@
+fastapi
+alembic
+uvicorn[standard]
+sqlmodel
+sqlalchemy
+pydantic
+pydantic_core
+psycopg2-binary
+python-dotenv
+GeoAlchemy2
+geoalchemy2[shapely]
+asyncpg
+google-auth
+python-jose[cryptography]
+passlib[bcrypt]
+requests
+pydantic[email]

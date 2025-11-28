@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+/* No Tailwind v4, os plugins são importados assim.
+  Certifique-se de ter instalado: npm install @tailwindcss/forms
+*/
+
+@theme {
+  /* --- CORES --- */
+  
+  /* Paleta UniLaSalle */
+  --color-lasalle-blue: #003366;
+  --color-lasalle-light: #4d7cc3;
+  --color-lasalle-yellow: #FDC346;
+
+  /* Paleta Enfermagem */
+  --color-nursing-teal: #00897b;
+  --color-nursing-light: #b2dfdb;
+
+  /* Neutros */
+  --color-neutral-bg: #f3f4f6;
+
+
+  /* --- FONTES --- */
+  /* Lembre-se de importar a fonte Inter no index.html ou aqui no CSS */
+  --font-sans: "Inter", system-ui, sans-serif;
+
+
+  /* --- BACKGROUND IMAGES (GRADIENTES) --- */
+  --background-image-nursing-gradient: linear-gradient(
+    to right bottom, 
+    rgba(0, 51, 102, 0.9), 
+    rgba(0, 137, 123, 0.8)
+  );
+}
