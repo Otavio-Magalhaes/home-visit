@@ -19,7 +19,7 @@ class HealthSituation(TimestampedModel, Base):
     
     resident_id = Column(String, ForeignKey('residents.id'), unique=False, nullable=False)
     visit_id = Column(Integer, ForeignKey("visits.id"), nullable=False, unique=True)
-
+    
     esta_gestante = Column(Boolean, default=False)
     maternidade_referencia = Column(String, nullable=True)
     

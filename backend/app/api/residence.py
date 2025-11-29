@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from geoalchemy2 import functions as geofunc
+from geoalchemy2 import WKTElement, functions as geofunc
 
 
 from app.core.database.database import get_session
@@ -17,11 +17,8 @@ def create_residence(
 ):
 
     geo_point = None
-    if payload.latitude and payload.longitude:
-        geo_point = geofunc.ST_SetSRID(
-            geofunc.ST_MakePoint(payload.longitude, payload.latitude),
-            4326
-        )
+    if payload.latitude is not None and payload.longitude is not None:
+        geo_point = WKTElement(f'POINT({payload.longitude} {payload.latitude})', srid=4326)
 
     residencia = Residence(
         responsavel_id=payload.responsavel_id,
@@ -87,9 +84,6 @@ def delete_residence(residence_id: int, db: Session = Depends(get_session)):
 
     return
 
-
-from geoalchemy2 import functions as geofunc
-from sqlalchemy import func
 
 @router.get("/nearby", response_model=list[ResidenciaResponse])
 def get_residences_nearby(

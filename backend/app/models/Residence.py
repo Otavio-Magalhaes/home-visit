@@ -75,10 +75,10 @@ class Residence(Base):
     def latitude(self):
         if self.geo_location is not None:
             return to_shape(self.geo_location).y
-        return 0.0
+        return None
 
     @property
     def longitude(self):
         if self.geo_location is not None:
             return to_shape(self.geo_location).x
-        return 0.0
+        return None

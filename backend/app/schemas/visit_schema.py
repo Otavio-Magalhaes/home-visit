@@ -5,24 +5,23 @@ from pydantic import BaseModel
 from app.schemas.healt_situation_schema import HealthSituationCreate
 from .user_schema import UserResponse
 from .resident_schema import ResidentResponse
-from .healt_situation_schema import HealthSituationResponse
+from .healt_situation_schema import HealthSituationBase, HealthSituationCreateNested
 
 class VisitBase(BaseModel):
-    visit_date: datetime
+    pass
 
 class VisitCreate(VisitBase):
-    user_id: int
-    resident_id: str 
-    health_situation: Optional[HealthSituationCreate] = None
+    resident_id: str
+    desfecho: str 
+    observacoes: Optional[str] = None
+    data_visita: Optional[datetime] = None 
+
+    health_situation: Optional[HealthSituationCreateNested] = None
 
 class VisitResponse(VisitBase):
     id: int
-    user: UserResponse
-    resident: ResidentResponse
-    health_situation: Optional[HealthSituationResponse]
-
-    created_at: datetime
-    updated_at: Optional[datetime]
+    data_visita: datetime
+    health_situation: Optional[HealthSituationBase] = None
 
     class Config:
         orm_mode = True

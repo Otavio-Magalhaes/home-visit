@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -7,17 +8,17 @@ from app.models.Timestamp import TimestampedModel
 class Visit(TimestampedModel, Base):
     __tablename__ = 'visits'
 
-    id = Column(Integer, primary_key=True, index=True)
-    visit_date = Column(DateTime, nullable=False)
-
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    resident_id = Column(String, ForeignKey('residents.id'), nullable=False)
-
-    user = relationship("User", back_populates="visits")
-    resident = relationship("Resident", back_populates="visits")
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     
-    health_situation = relationship(
-        "HealthSituation",
-        back_populates="visit",
-        uselist=False
-    )
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    
+    resident_id = Column(String, ForeignKey('residents.id'), nullable=False)
+    
+    data_visita = Column(DateTime, default=datetime.utcnow)
+    desfecho = Column(String, nullable=True) # Ex: "REALIZADA", "RECUSADA", "AUSENTE"
+    observacoes = Column(String, nullable=True)
+
+    health_situation = relationship("HealthSituation", back_populates="visit", uselist=False, cascade="all, delete-orphan")
+    
+    resident = relationship("Resident", back_populates="visits")
+    user = relationship("User", back_populates="visits")

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, healthSituation, resident, visit
+from app.api import auth, dashboard, healthSituation, resident, visit
 from app.api import residence
 
 
@@ -25,3 +25,4 @@ app.include_router(residence.router, prefix="/api/residence")
 app.include_router(resident.router, prefix="/api/resident")
 app.include_router(healthSituation.router, prefix="/api/health-situation")
 app.include_router(visit.router, prefix="/api/visit")
+app.include_router(dashboard.router, prefix="/api/dashboard")
