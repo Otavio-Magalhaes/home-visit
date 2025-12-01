@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Depends, status
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database.database import get_session
+from app.models import User
+from app.schemas.user_schema import UserResponse
 from app.services.auth_service import AuthService
 from app.schemas.auth_schema import GoogleLoginRequest, TokenResponse
 

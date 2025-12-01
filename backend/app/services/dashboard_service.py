@@ -1,4 +1,8 @@
-from datetime import date, timedelta
+import csv
+from datetime import date, datetime, timedelta
+import io
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, case, distinct, and_
 from geoalchemy2 import Geography
@@ -118,11 +122,16 @@ def get_dashboard_statistics(db: Session, filters: DashboardFilterSchema):
       func.count(Resident.id).label("total_pessoas"),
       func.count(distinct(Residence.id)).label("total_domicilios"),
       
-      func.sum(case((HealthSituation.tem_hipertensao == True, 1), else_=0)).label("qtd_hipertensos"),
-      func.sum(case((HealthSituation.tem_diabetes == True, 1), else_=0)).label("qtd_diabeticos"),
-      func.sum(case((HealthSituation.esta_gestante == True, 1), else_=0)).label("qtd_gestantes"),
-      func.sum(case((HealthSituation.em_situacao_rua == True, 1), else_=0)).label("qtd_situacao_rua"),
-      func.sum(case((Resident.possui_deficiencia == True, 1), else_=0)).label("qtd_com_deficiencia"),
+   
+      func.sum(
+          case((func.extract('year', func.age(Resident.data_nascimento)) < 18, 1), else_=0)
+      ).label("qtd_menores"),
+      
+      func.sum(
+          case((func.extract('year', func.age(Resident.data_nascimento)) >= 18, 1), else_=0)
+      ).label("qtd_maiores"),
+      
+   
   ).first()
 
   return {
@@ -130,40 +139,134 @@ def get_dashboard_statistics(db: Session, filters: DashboardFilterSchema):
       "resultados": {
           "total_pessoas": stats.total_pessoas or 0,
           "total_domicilios": stats.total_domicilios or 0,
-          "risco_saude": {
-              "hipertensos": stats.qtd_hipertensos or 0,
-              "diabeticos": stats.qtd_diabeticos or 0,
-              "gestantes": stats.qtd_gestantes or 0,
-          },
-          "vulnerabilidade": {
-              "situacao_rua": stats.qtd_situacao_rua or 0,
-              "com_deficiencia": stats.qtd_com_deficiencia or 0
-          }
+          "qtd_maiores": stats.qtd_maiores or 0, # Novo campo
+          "qtd_menores": stats.qtd_menores or 0, # Novo campo
       }
   }
-
 def get_dashboard_map_pins(db: Session, filters: DashboardFilterSchema):
     """
     Retorna a lista de residências para plotar no mapa.
     """
     base_query = _apply_dashboard_filters(db, filters)
 
+   
     pins = base_query.with_entities(
         Residence.id,
-        Residence.latitude, 
-        Residence.longitude,
+        func.ST_Y(Residence.geo_location).label("latitude"),  # Extrai Latitude (Y)
+        func.ST_X(Residence.geo_location).label("longitude"), # Extrai Longitude (X)
         Residence.nome_logradouro,
         Residence.numero,
         Residence.bairro
     ).group_by(Residence.id).all()
 
-    # 3. Formata para o Frontend
     return [
         {
-            "id": str(pin.id), # Converter para string se for UUID
-            "lat": pin.latitude,
-            "lng": pin.longitude,
+            "id": str(pin.id), 
+            "lat": pin.latitude,  
+            "lng": pin.longitude, 
             "titulo": f"{pin.nome_logradouro}, {pin.numero} - {pin.bairro}"
         }
         for pin in pins
     ]
+
+def _get_model_columns(model):
+    """Auxiliar para pegar nomes das colunas de um Model do SQLAlchemy"""
+    return [c.name for c in model.__table__.columns]
+
+def _format_value(value):
+
+    if value is None:
+        return ""
+        
+    if isinstance(value, datetime):
+        return value.replace(tzinfo=None)
+
+    if isinstance(value, list):
+        return ", ".join(map(str, value))
+        
+    if hasattr(value, "value"): 
+        return value.value
+        
+    return value
+
+def _style_and_adjust_worksheet(ws, headers):
+    """Aplica estilo ao cabeçalho e ajusta a largura das colunas."""
+    header_font = Font(bold=True, color="FFFFFF")
+    header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    header_fill = PatternFill(start_color="4d7cc3", end_color="4d7cc3", fill_type="solid")
+
+    for cell in ws[1]:
+        cell.font = header_font
+        cell.alignment = header_alignment
+        cell.fill = header_fill
+
+    for i, column_header in enumerate(headers, 1):
+        column_letter = ws.cell(row=1, column=i).column_letter
+        max_length = len(str(column_header))
+        for cell in ws[column_letter]:
+            if cell.value and len(str(cell.value)) > max_length:
+                max_length = len(str(cell.value))
+        adjusted_width = (max_length + 2) * 1.2
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+def export_dashboard_data_xlsx(db: Session, filters: DashboardFilterSchema):
+    base_query = _apply_dashboard_filters(db, filters)
+    residents = base_query.all()
+
+    unique_residences = {}
+    unique_health_situations = {}
+    data_residents = []
+
+    for resident in residents:
+        data_residents.append(resident)
+        if resident.residence:
+            unique_residences[resident.residence.id] = resident.residence
+        if resident.health_situation:
+            unique_health_situations[resident.health_situation.id] = resident.health_situation
+
+    wb = Workbook()
+
+    # --- ABA 1 : Residencias ---
+    ws1 = wb.active
+    ws1.title = "Residencias"
+    cols_residence = _get_model_columns(Residence)
+    ws1.append(cols_residence)
+    
+    
+    for res in unique_residences.values():
+        row = [_format_value(getattr(res, col)) for col in cols_residence]
+        
+        geo_idx = cols_residence.index('geo_location') if 'geo_location' in cols_residence else -1
+        if geo_idx != -1:
+            row[geo_idx] = str(getattr(res, 'geo_location')) if getattr(res, 'geo_location') else ""
+            
+        ws1.append(row)
+
+    _style_and_adjust_worksheet(ws1, cols_residence)
+
+    # --- ABA 2: MORADORES ---
+    ws2 = wb.create_sheet(title="Moradores")
+    cols_resident = _get_model_columns(Resident)
+    ws2.append(cols_resident)
+    
+    for r in data_residents:
+        row = [_format_value(getattr(r, col)) for col in cols_resident]
+        ws2.append(row)
+
+    _style_and_adjust_worksheet(ws2, cols_resident)
+
+    # --- ABA 3: SAÚDE ---
+    ws3 = wb.create_sheet(title="Saude")
+    cols_health = _get_model_columns(HealthSituation)
+    ws3.append(cols_health)
+    
+    for h in unique_health_situations.values():
+        row = [_format_value(getattr(h, col)) for col in cols_health]
+        ws3.append(row)
+
+    _style_and_adjust_worksheet(ws3, cols_health)
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output

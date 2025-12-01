@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_active_user
 from app.core.database.database import  get_session
+from app.models import User
 from app.models.Visit import Visit
 from app.schemas.visit_schema import VisitCreate, VisitResponse
 from app.services import visit_service
@@ -12,11 +14,9 @@ router = APIRouter( tags=["Visits"])
 def create_visit(
     data: VisitCreate, 
     db: Session = Depends(get_session),
-    # current_user = Depends(get_current_user) # Descomente quando tiver auth
+    current_user: User = Depends(get_current_active_user)
 ):
-    user_id = 1
-    
-    return visit_service.create_visit(db, data, user_id)
+    return visit_service.create_visit(db, data, user_id=current_user.id)
 
 
 @router.get("/", response_model=list[VisitResponse])

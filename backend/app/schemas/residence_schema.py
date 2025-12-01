@@ -16,7 +16,6 @@ from app.models.enums import (
 
 
 class ResidenciaBase(BaseModel):
-  responsavel_id: int
   # Localização e Endereço
   cep: str = Field(max_length=8)
   municipio: str

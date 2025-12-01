@@ -23,6 +23,7 @@ class UserResponse(UserBase):
   cnes: Optional[str] = None
   ine: Optional[str] = None
 
+
   class Config:
     from_attributes = True
 

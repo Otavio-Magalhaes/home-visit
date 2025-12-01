@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 # Imports do seu projeto
@@ -33,3 +34,21 @@ def get_map_pins(
         return dashboard_service.get_dashboard_map_pins(db, filters)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao buscar pontos do mapa: {str(e)}")
+    
+@router.post("/export")
+def export_report(
+    filters: DashboardFilterSchema,
+    db: Session = Depends(get_session)
+):
+    try:
+        excel_file = dashboard_service.export_dashboard_data_xlsx(db, filters)
+        
+        filename = "relatorio_completo.xlsx"
+        
+        return StreamingResponse(
+            excel_file,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao gerar Excel: {str(e)}")

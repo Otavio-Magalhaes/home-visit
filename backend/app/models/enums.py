@@ -129,15 +129,18 @@ class GrauParentescoEnum(str, Enum):
 class EscolaridadeEnum(str, Enum):
     CRECHE = "creche"
     PRE_ESCOLA = "pre_escola"
-    ALFABETIZACAO = "alfabetizacao"
+    CLASSE_ALFABETIZACAO = "classe_alfabetizacao" # Novo
     FUNDAMENTAL_1_4 = "fundamental_1_4"
     FUNDAMENTAL_5_8 = "fundamental_5_8"
     FUNDAMENTAL_COMPLETO = "fundamental_completo"
+    FUNDAMENTAL_ESPECIAL = "fundamental_especial" # Novo
     EJA_INICIAIS = "eja_iniciais"
     EJA_FINAIS = "eja_finais"
     MEDIO = "medio"
+    MEDIO_ESPECIAL = "medio_especial" # Novo
     MEDIO_EJA = "medio_eja"
     SUPERIOR = "superior"
+    ALFABETIZACAO_ADULTOS = "alfabetizacao_adultos" 
     NENHUM = "nenhum"
 
 

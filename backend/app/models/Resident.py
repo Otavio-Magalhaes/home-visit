@@ -24,7 +24,7 @@ class Resident(TimestampedModel, Base):
     __tablename__ = "residents"
 
     # Identificador
-    id = Column(String, primary_key=True, index=True)
+    id = Column(String, primary_key=True, index=True, )
     residence_id = Column(
         Integer,
         ForeignKey("residence.id", ondelete="CASCADE"),

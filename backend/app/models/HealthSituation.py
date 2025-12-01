@@ -61,9 +61,7 @@ class HealthSituation(TimestampedModel, Base):
     usa_praticas_integrativas = Column(Boolean, default=False)
 
     # Outras condições de saúde
-    outras_condicoes_1 = Column(String, nullable=True)
-    outras_condicoes_2 = Column(String, nullable=True)
-    outras_condicoes_3 = Column(String, nullable=True)
+    outras_condicoes = Column(ARRAY(String), nullable=True)
 
     em_situacao_rua = Column(Boolean, default=False)
     

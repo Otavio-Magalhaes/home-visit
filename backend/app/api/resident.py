@@ -54,3 +54,11 @@ def delete_resident(resident_id: str, db: Session = Depends(get_session)):
     db.delete(resident)
     db.commit()
     return {"detail": "Resident deleted successfully"}
+
+@router.get("/", response_model=list[ResidentResponse])
+def list_residents( skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_session)
+):
+    residents =  db.query(Resident).offset(skip).limit(limit).all()
+    return residents

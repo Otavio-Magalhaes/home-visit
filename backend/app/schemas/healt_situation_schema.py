@@ -1,14 +1,14 @@
 from typing import List, Optional
 from datetime import date, datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from app.models.enums import (
     PesoSituacaoEnum, TempoSituacaoRuaEnum, FrequenciaAlimentacaoEnum
 )
 
 class HealthSituationBase(BaseModel):
-  # Condições Gerais
+    # Condições Gerais
     esta_gestante: bool = False
-    maternidade_referencia: Optional[str] = None # <--- Importante: = None
+    maternidade_referencia: Optional[str] = None
 
     peso_situacao: Optional[PesoSituacaoEnum] = None
 
@@ -24,15 +24,15 @@ class HealthSituationBase(BaseModel):
 
     # Doença Cardíaca
     tem_doenca_cardiaca: bool = False
-    doencas_cardiacas_tipos: Optional[List[str]] = []
+    doencas_cardiacas_tipos: List[str] = Field(default_factory=list)
 
     # Problemas nos Rins
     tem_problemas_rins: bool = False
-    problemas_rins_tipos: Optional[List[str]] = []
+    problemas_rins_tipos: List[str] = Field(default_factory=list)
 
     # Doença Respiratória
     tem_doenca_respiratoria: bool = False
-    doenca_respiratoria_tipos: Optional[List[str]] = []
+    doenca_respiratoria_tipos: List[str] = Field(default_factory=list)
 
     # Outras Doenças
     tem_hanseniase: bool = False
@@ -41,7 +41,7 @@ class HealthSituationBase(BaseModel):
 
     # Internação e Saúde Mental
     internacao_ultimos_12_meses: bool = False
-    causa_internacao: Optional[str] = None # <--- = None
+    causa_internacao: Optional[str] = None
 
     diagnostico_problema_mental: bool = False
 
@@ -54,9 +54,7 @@ class HealthSituationBase(BaseModel):
 
     usa_praticas_integrativas: bool = False
 
-    outras_condicoes_1: Optional[str] = None
-    outras_condicoes_2: Optional[str] = None
-    outras_condicoes_3: Optional[str] = None
+    outras_condicoes: List[str] = Field(default_factory=list)
 
     # Situação de Rua
     em_situacao_rua: bool = False
@@ -70,26 +68,30 @@ class HealthSituationBase(BaseModel):
 
     # Alimentação
     frequencia_alimentacao: Optional[FrequenciaAlimentacaoEnum] = None
-    origem_alimentacao: Optional[List[str]] = []
+    origem_alimentacao: List[str] = Field(default_factory=list)
 
     # Higiene
     tem_acesso_higiene_pessoal: bool = False
-    higiene_pessoal_tipos: Optional[List[str]] = []
+    higiene_pessoal_tipos: List[str] = Field(default_factory=list)
+
 
 class HealthSituationCreateNested(HealthSituationBase):
     pass
 
+
 class HealthSituationCreate(HealthSituationBase):
-  resident_id: str
-  visit_id: int
+    resident_id: str
+    visit_id: int
+
 
 class HealthSituationUpdate(HealthSituationBase):
-  pass
+    pass
+
 
 class HealthSituationResponse(HealthSituationBase):
-  id: int
-  created_at: datetime
-  updated_at: Optional[datetime]
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime]
 
-  class Config:
-      orm_mode = True
+    class Config:
+        orm_mode = True

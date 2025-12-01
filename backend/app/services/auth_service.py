@@ -26,8 +26,8 @@ class AuthService:
             name = id_info.get("name")
 
             
-            dev_emails = ["otaviomag1@gmail.com", "aqiresf30@gmail.com"]
-
+            dev_emails = ["otaviomag1@gmail.com",]
+            
             is_institutional = email.endswith("@soulasalle.com.br")
             is_developer = email in dev_emails
 
@@ -60,7 +60,7 @@ class AuthService:
                 self.db.commit()
                 self.db.refresh(user)
 
-            access_token = self._create_access_token(data={"sub": user.email, "user_id": user.id})
+            access_token = self._create_access_token(data={"sub": user.email, "user_id": user.id, "role": user.role.name, "is_active": user.is_active})
             
             return TokenResponse(access_token=access_token, token_type="bearer")
 
@@ -78,3 +78,4 @@ class AuthService:
         
         encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
         return encoded_jwt
+    

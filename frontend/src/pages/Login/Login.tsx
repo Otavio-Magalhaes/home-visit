@@ -1,7 +1,8 @@
 import React from 'react';
 import NurseBG from '../../assets/nurse-bg.png'; // Certifique-se que o caminho está certo
-import { useGoogleAuth } from '../../hooks/api/useGoogleAuth';
-import { LoginForm } from './LoginForm';
+import { useGoogleAuth } from '@/hooks/api/useGoogleAuth.js';
+import { LoginForm } from './LoginForm.js';
+import { toast } from "sonner"; 
 
 
 const Login = () => {
@@ -14,13 +15,12 @@ const Login = () => {
   };
 
   const handleError = () => {
-    alert("Erro na conexão com o Google. Tente novamente.");
+    toast.error("Erro na conexão com o Google. Tente novamente.");
   };
 
   return (
     <div className="min-h-screen bg-neutral-bg flex flex-col md:flex-row">
       
-      {/* LADO ESQUERDO (MANTIDO IGUAL) */}
       <div className="hidden md:flex md:w-1/2 relative bg-lasalle-blue items-center justify-center overflow-hidden">
          <div 
             className="absolute inset-0 bg-cover bg-center z-0"

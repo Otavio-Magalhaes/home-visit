@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import auth, dashboard, healthSituation, resident, visit
+from app.api import auth, dashboard, healthSituation, resident, users, visit
 from app.api import residence
 
 
@@ -21,6 +21,7 @@ def root():
 
 
 app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
+app.include_router(users.router, prefix="/api/users", tags=["Users"])
 app.include_router(residence.router, prefix="/api/residence")
 app.include_router(resident.router, prefix="/api/resident")
 app.include_router(healthSituation.router, prefix="/api/health-situation")

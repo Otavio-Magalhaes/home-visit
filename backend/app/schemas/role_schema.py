@@ -12,8 +12,7 @@ class RoleCreate(RoleBase):
 class RoleResponse(RoleBase):
   id: int
   name: str
-  created_at: datetime
-  updated_at: datetime
+
 
   class Config:
     orm_mode = True

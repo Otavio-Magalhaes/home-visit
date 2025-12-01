@@ -1,86 +1,71 @@
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
+import { GoogleMapComponent } from '../../components/Map/GoogleMap';
+import { Flame, MapIcon } from 'lucide-react';
+import { useDashboard } from '../../components/layout/DashboardLayout';
+import { useDashboardMap } from '../../hooks/useDashboardMap';
+import { useDashboardStats } from '../../hooks/useDashboardStats';
+import KpiCard from '../../components/KpiCards';
 
-const Dashboard= () => {
-  const navigate = useNavigate();
+// Tipagem
+type MapPin = {
+  id: string;
+  lat: number;
+  lng: number;
+  titulo: string;
+};
 
-  const handleLogout = () => {
-    navigate('/');
+const Dashboard = () => {
+  const { filters, setFilters } = useDashboard();
+  const { pinos, isLoadingMap } = useDashboardMap(filters);
+  const { stats, isLoadingStats } = useDashboardStats(filters);
+  const [viewMode, setViewMode] = useState<'markers' | 'heatmap'>('markers');
+
+
+  const handleMapClick = (lat: number, lng: number) => {
+    setFilters((prev: any) => ({ ...prev, latitude: lat, longitude: lng }));
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Navbar Simples */}
-      <nav className="bg-lasalle-blue shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-3">
-                <div className="h-8 w-8 bg-white/10 rounded-full flex items-center justify-center text-white">
-                    🎓
-                </div>
-                <span className="text-white font-bold text-lg">Portal Enfermagem</span>
-            </div>
-            <button 
-                onClick={handleLogout}
-                className="text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-            >
-                Sair
-            </button>
-          </div>
+    <div className="space-y-6">
+        {/* Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard label="Total Pessoas" value={stats?.resultados?.total_pessoas} loading={isLoadingStats} color="border-blue-500" />
+            <KpiCard label="Domicílios" value={stats?.resultados?.total_domicilios} loading={isLoadingStats} color="border-green-500" />
+            <KpiCard label="Adultos (+18)" value={stats?.resultados?.qtd_maiores} loading={isLoadingStats} color="border-indigo-500" />
+            <KpiCard label="Crianças / Adolescentes (-18)" value={stats?.resultados?.qtd_menores} loading={isLoadingStats} color="border-orange-500" />
         </div>
-      </nav>
 
-      {/* Conteúdo */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-            
-            {/* Cartão de Boas Vindas */}
-            <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
-                <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
-                        Bem-vindo ao Sistema
-                    </h3>
-                    <div className="mt-2 max-w-xl text-sm text-gray-500">
-                        <p>Seu login foi realizado com sucesso através do Google SSO.</p>
-                    </div>
-                    <div className="mt-5">
-                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                            Conexão Ativa
-                        </span>
-                    </div>
-                </div>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 relative h-[600px] overflow-hidden">
+            <div className="absolute top-2.5 right-15 z-10 bg-white/90 backdrop-blur rounded-lg shadow-md p-1 flex gap-1">
+                <button 
+                    onClick={() => setViewMode('markers')}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'markers' ? 'bg-lasalle-blue text-white shadow' : 'hover:bg-gray-100 text-gray-600'}`}
+                >
+                    <MapIcon size={16} /> Pinos
+                </button>
+                <button 
+                    onClick={() => setViewMode('heatmap')}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'heatmap' ? 'bg-red-500 text-white shadow' : 'hover:bg-gray-100 text-gray-600'}`}
+                >
+                    <Flame size={16} /> Calor
+                </button>
             </div>
 
-            {/* Grid de Ações Rápidas (Placeholder) */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {/* Card 1 */}
-                <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer border-l-4 border-nursing-teal">
-                    <div className="px-4 py-5 sm:p-6">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
-                            Minhas Visitas
-                        </dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                            0
-                        </dd>
-                    </div>
-                </div>
-
-                {/* Card 2 */}
-                <div className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow cursor-pointer border-l-4 border-lasalle-blue">
-                    <div className="px-4 py-5 sm:p-6">
-                        <dt className="text-sm font-medium text-gray-500 truncate">
-                            Moradores Cadastrados
-                        </dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">
-                            0
-                        </dd>
-                    </div>
-                </div>
-            </div>
-
+            <GoogleMapComponent 
+                pinos={pinos} 
+                centerLat={filters.latitude}
+                centerLng={filters.longitude}
+                radiusMeters={Number(filters.radius_meters)}
+                onMapClick={handleMapClick}
+                viewMode={viewMode}
+            />
         </div>
-      </main>
     </div>
   );
 };
+
+
 
 export default Dashboard;
