@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button.js';
 import { Separator } from '@radix-ui/react-separator';
 import { Badge } from '@/components/ui/badge.js';
 import QuickActionCard from '@/components/QuickCardAction.js';
-import { db } from '@/lib/db.js';
+import { db } from '@/libs/db.js';
 import { useSync } from '@/hooks/useAsync.js';
 
 

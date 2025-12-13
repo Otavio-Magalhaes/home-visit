@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db.js';
+import { db } from '@/libs/db.js';
 import { residentSchema, type ResidentFormValues } from '@/schemas/ResidentSchema.js';
 
 // Ícones e UI

@@ -1,5 +1,5 @@
 import type { FiltersType } from "@/@types/index.js";
-import { api } from "@/lib/api.js";
+import { api } from "@/libs/api.js";
 
 
 // Tipagens existentes...

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { MapPin, Save, Loader2, Locate, Home, Droplets, PawPrint, Phone, CheckCircle2 } from 'lucide-react';
 import { toast } from "sonner"; 
-import { db } from '@/lib/db.js';
+import { db } from '@/libs/db.js';
 import { residenceSchema, type ResidenceFormValues } from '@/schemas/ResidenceSchema.js';
 
 // UI Components
