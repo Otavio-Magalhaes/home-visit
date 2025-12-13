@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { db } from '../lib/db';
 import { api } from '../lib/api';
+import { toast } from 'sonner';
 
 export function useSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isSyncing, setIsSyncing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
-  // Monitoramento de status (igual ao anterior)
   useEffect(() => {
     const updateOnlineStatus = () => setIsOnline(navigator.onLine);
     const updatePendingCount = async () => {
@@ -27,11 +27,9 @@ export function useSync() {
     };
   }, []);
 
-  // --- FUNÇÃO DE UPLOAD INTELIGENTE ---
   const syncNow = async () => {
     if (!isOnline || isSyncing) return;
     
-    // Ordena por ID para garantir que pais (criados antes) subam antes dos filhos
     const pendentes = await db.syncQueue.where('synced').equals(0).sortBy('id');
     
     if (pendentes.length === 0) return;
@@ -40,17 +38,14 @@ export function useSync() {
     let enviados = 0;
 
     try {
-      console.log(`🔄 Iniciando sincronização de ${pendentes.length} itens...`);
-
-      // Não usamos forEach ou map, pois precisamos esperar (await) cada um
-      // e, CRUCIALMENTE, precisamos ler/atualizar a fila em tempo real
+      console.log(`🔄 Iniciando Upload de ${pendentes.length} itens...`);
+    
       for (const item of pendentes) {
         try {
           let endpoint = '';
           
-          // Re-lê o item do banco para garantir que pegamos atualizações de cascata feitas no loop anterior
           const currentItem = await db.syncQueue.get(item.id!);
-          if (!currentItem) continue; // Já foi processado ou deletado
+          if (!currentItem) continue;
           
           const payload = currentItem.payload;
 
@@ -61,35 +56,24 @@ export function useSync() {
           }
 
           if (endpoint) {
-            // 1. Envia para a API
             const response = await api.post(endpoint, payload);
-            const realId = response.data.id; // O ID real gerado pelo banco (ex: 55 ou uuid-real)
-            const tempId = currentItem.temp_id; // O ID temporário (ex: uuid-temp)
+            const realId = response.data.id; 
+            const tempId = currentItem.temp_id; 
 
-            // 2. CASCATA DE ATUALIZAÇÃO DE IDs (O Segredo!)
-            // Se o ID mudou (ou se era temporário), atualizamos quem depende dele na fila
-            
             if (realId && tempId) {
-                
-                // CASO A: Acabei de criar uma RESIDÊNCIA
                 if (currentItem.tipo === 'residencia') {
-                    // Procuro Moradores na fila que dependem dessa casa antiga
                     await db.syncQueue
                         .where('tipo').equals('morador')
                         .filter(i => i.synced === 0)
                         .modify(dependente => {
-                            // Se o morador aponta para a casa temporária...
-                            // Atenção: Convertemos para string para comparar seguro
                             if (String(dependente.payload.residence_id) === String(tempId)) {
                                 console.log(`🔗 Atualizando vínculo: Morador agora mora na casa ID ${realId}`);
-                                dependente.payload.residence_id = realId; // Atualiza para o ID real
+                                dependente.payload.residence_id = realId;
                             }
                         });
                 }
 
-                // CASO B: Acabei de criar um MORADOR
                 if (currentItem.tipo === 'morador') {
-                    // Procuro Visitas na fila que dependem desse morador antigo
                     await db.syncQueue
                         .where('tipo').equals('visita')
                         .filter(i => i.synced === 0)
@@ -102,20 +86,18 @@ export function useSync() {
                 }
             }
 
-            // 3. Marca como enviado (Sucesso)
             await db.syncQueue.delete(currentItem.id!);
             enviados++;
           }
 
         } catch (error) {
-          console.error(`❌ Erro ao sincronizar item ${item.tipo}:`, error);
-          // Se der erro, paramos ou continuamos? 
-          // Melhor continuar tentando os outros que não dependem desse.
+          console.error(`❌ Erro ao subir item ${item.tipo}:`, error);
         }
       }
 
       if (enviados > 0) {
-        console.log(`✅ ${enviados} itens sincronizados e vínculos corrigidos!`);
+        console.log(`✅ Upload concluído: ${enviados} itens enviados.`);
+        await syncDown(); 
       }
 
     } finally {
@@ -123,14 +105,46 @@ export function useSync() {
     }
   };
 
-  // ... (syncDown mantido)
   const syncDown = async () => {
-    if (!navigator.onLine) return;
-    // ... sua lógica de syncDown existente ...
+    if (!navigator.onLine) {
+        console.warn("Sem internet para baixar dados.");
+        return;
+    }
+
+    try {
+        setIsSyncing(true);
+        console.log("⬇️ Iniciando Sync Down (Baixando dados do servidor)...");
+
+        const [resResidences, resResidents] = await Promise.all([
+            api.get('/residence/?limit=1000'),
+            api.get('/resident/?limit=1000')
+        ]);
+
+        const serverResidences = resResidences.data;
+        const serverResidents = resResidents.data;
+
+        await db.transaction('rw', db.residences, db.residents, async () => {
+            await db.residences.clear(); 
+            await db.residences.bulkPut(serverResidences);
+
+            await db.residents.clear();
+            await db.residents.bulkPut(serverResidents);
+        });
+        toast.success(" Sincronização concluída!");
+        console.log(`✅ Sync Down concluído! ${serverResidences.length} casas e ${serverResidents.length} moradores baixados.`);
+
+    } catch (error) {
+        toast.error("Erro ao baixar dados do servidor.");
+        console.error("❌ Erro ao baixar dados do servidor:", error);
+    } finally {
+        setIsSyncing(false);
+    }
   };
 
   useEffect(() => {
-    if (isOnline) syncNow();
+    if (isOnline) {
+        syncNow();
+    }
   }, [isOnline]);
 
   return { isOnline, isSyncing, syncNow, syncDown, pendingCount };

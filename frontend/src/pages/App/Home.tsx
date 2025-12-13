@@ -11,7 +11,6 @@ import QuickActionCard from '@/components/QuickCardAction.js';
 import { db } from '@/lib/db.js';
 import { useSync } from '@/hooks/useAsync.js';
 
-// Componentes shadcn/ui
 
 const AppHome = () => {
   const navigate = useNavigate();
@@ -69,7 +68,6 @@ const AppHome = () => {
   return (
     <div className="space-y-6 pb-20">
       
-      {/* Card Boas Vindas */}
       <Card className="border-none shadow-sm bg-white">
         <CardHeader className="pb-3">
             <div className="flex justify-between items-start">

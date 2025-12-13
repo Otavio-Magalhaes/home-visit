@@ -1,17 +1,21 @@
 from geoalchemy2.shape import to_shape
 from sqlalchemy.orm import relationship
 from app.core.database.database import Base
-from app.models.Timestamp import TimestampedModel
+# from app.models.Timestamp import TimestampedModel # Descomente se for usar
 
 from sqlalchemy import (
-    Column, ForeignKey, String, Integer, Boolean, Enum, Float
+    Column, ForeignKey, String, Integer, Boolean, Enum
 )
 from sqlalchemy.dialects.postgresql import ARRAY
 from geoalchemy2 import Geometry
-from app.models.enums import AbastecimentoAguaEnum, AcessoEnum, DestinoLixoEnum, DomicilioEnum, EscoamentoSanitarioEnum, ImovelEnum, MaterialParedesEnum, PosseTerraEnum, SituacaoMoradiaEnum, TratamentoAguaEnum
-from .User import User
-
-
+from app.models.enums import (
+    AbastecimentoAguaEnum, AcessoEnum, DestinoLixoEnum, DomicilioEnum, 
+    EscoamentoSanitarioEnum, ImovelEnum, MaterialParedesEnum, PosseTerraEnum, 
+    SituacaoMoradiaEnum, TratamentoAguaEnum
+)
+# Certifique-se que o import do User está correto no seu projeto
+# from.User import User 
+from sqlalchemy.ext.hybrid import hybrid_property
 
 
 class Residence(Base):
@@ -61,6 +65,7 @@ class Residence(Base):
 
     condicao_posse_terra = Column(Enum(PosseTerraEnum), nullable=True)
 
+    # Relacionamentos
     responsavel = relationship("User", back_populates="residencias")
 
     residents = relationship(
@@ -71,14 +76,31 @@ class Residence(Base):
 
     geo_location = Column(Geometry("POINT", srid=4326), nullable=True)
 
-    @property
+
+    @hybrid_property
     def latitude(self):
         if self.geo_location is not None:
-            return to_shape(self.geo_location).y
+            if isinstance(self.geo_location, str):
+                return 0 
+            point = to_shape(self.geo_location)
+            return point.y
         return None
 
-    @property
+    @latitude.setter
+    def latitude(self, value):
+        current_long = self.longitude if self.longitude is not None else 0
+        self.geo_location = f'SRID=4326;POINT({current_long} {value})'
+
+    @hybrid_property
     def longitude(self):
         if self.geo_location is not None:
-            return to_shape(self.geo_location).x
+            if isinstance(self.geo_location, str):
+                return 0
+            point = to_shape(self.geo_location)
+            return point.x
         return None
+
+    @longitude.setter
+    def longitude(self, value):
+        current_lat = self.latitude if self.latitude is not None else 0
+        self.geo_location = f'SRID=4326;POINT({value} {current_lat})'

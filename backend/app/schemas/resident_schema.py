@@ -1,10 +1,9 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 from datetime import date, datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ValidationInfo, field_validator
 
 from app.models.enums import EscolaridadeEnum, GrauParentescoEnum, IdentidadeGeneroEnum, NacionalidadeEnum, OrientacaoSexualEnum, RacaCorEnum, SexoEnum, SituacaoMercadoEnum
 from .residence_schema import ResidenciaResponse
-
 
 
 
@@ -73,6 +72,18 @@ class ResidentBase(BaseModel):
     data_obito: Optional[date] = None
     numero_do: Optional[str] = None
 
+    @field_validator('*', mode='before')
+    @classmethod
+    def empty_string_to_none(cls, v: Any, info: ValidationInfo) -> Any:
+        """
+        Transforma strings vazias ('') vindas do React em None
+        para não quebrar campos opcionais de Data, Email ou Enum.
+        """
+        if v == "":
+            return None
+        return v
+    
+    
 class ResidentCreate(ResidentBase):
     pass
 

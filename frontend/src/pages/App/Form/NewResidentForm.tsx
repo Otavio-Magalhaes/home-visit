@@ -55,7 +55,6 @@ export default function NewResidentForm() {
     try {
       setIsSaving(true);
 
-      // Helper para arrays
       const splitArray = (val?: string) => val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
 
       const novoMorador = {
@@ -63,16 +62,16 @@ export default function NewResidentForm() {
         tipo: 'morador' as const,
         payload: {
             ...data,
-            deficiencias_tipo: splitArray(data.deficiencias_tipo),
+            deficiencias_tipo: splitArray(data.deficiencias_tipo),            
             responsavel_crianca: splitArray(data.responsavel_crianca),
-            residence_id: String(data.residence_id) // Garante string para o sync
+            residence_id: String(data.residence_id)
         },
         synced: 0,
         created_at: new Date()
       };
 
       await db.syncQueue.add(novoMorador);
-      toast.sucess("Morador salvo no dispositivo!");
+      toast.success("Morador salvo no dispositivo!");
       navigate('/app/home');
 
     } catch (error) {

@@ -8,7 +8,6 @@ from app.core.database.database import get_session
 from app.core.config import settings
 from app.models.User import User
 
-# Define que o token vem do header "Authorization: Bearer <token>"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/google")
 
 def get_current_user(
@@ -22,7 +21,6 @@ def get_current_user(
     )
     
     try:
-        # 1. Decodifica o Token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: int = payload.get("user_id") # Pegamos o ID que salvamos no login
         if user_id is None:
@@ -30,7 +28,6 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    # 2. Busca o usuário no banco
     user = db.get(User, user_id)
     if user is None:
         raise credentials_exception

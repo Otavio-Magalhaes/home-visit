@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator.js';
 import CheckField from '@/components/CheckField.js';
 import TextField from '@/components/TextField.js';
 import { visitFormSchema, type VisitFormValues } from '@/schemas/VisitSchema.js';
+import { toast } from 'sonner';
 
 export default function NewVisitWizard() {
   const navigate = useNavigate();
@@ -35,7 +36,6 @@ export default function NewVisitWizard() {
     defaultValues: {
       data_visita: new Date().toISOString().split('T')[0],
       desfecho: "REALIZADA",
-      // Defaults para evitar erros de uncontrolled components
       esta_gestante: false, tem_hipertensao: false, tem_diabetes: false,
       esta_acamado: false, em_situacao_rua: false,
       esta_fumante: false, usa_alcool: false, usa_outras_drogas: false,
@@ -46,7 +46,6 @@ export default function NewVisitWizard() {
 
   const selectedResidenceId = form.watch('residence_id');
 
-  // --- QUERIES (Dexie) ---
   const residences = useLiveQuery(async () => {
     const serverData = await db.residences.toArray();
     const localData = await db.syncQueue.where('tipo').equals('residencia').filter(i => i.synced === 0).toArray();
@@ -62,7 +61,6 @@ export default function NewVisitWizard() {
     return [...serverData, ...localFormatted];
   }, [selectedResidenceId]);
 
-  // --- NAVEGAÇÃO ---
   const nextStep = async (e: React.MouseEvent) => {
     e.preventDefault();
     let isValid = false;
@@ -73,12 +71,10 @@ export default function NewVisitWizard() {
 
   const prevStep = (e: React.MouseEvent) => { e.preventDefault(); setStep(s => s - 1); window.scrollTo(0, 0); };
 
-  // --- SUBMIT ---
   const onSubmit = async (data: VisitFormValues) => {
     try {
       setIsSaving(true);
       
-      // Helper: Transforma string separada por vírgula em Lista de Strings
       const splitArray = (val?: string | string[]) => {
           if (Array.isArray(val)) return val;
           return val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -90,17 +86,14 @@ export default function NewVisitWizard() {
         data_visita: new Date(data.data_visita).toISOString(),
         observacoes: data.observacoes,
         
-        // Objeto HealthSituation (só se realizada)
         health_situation: data.desfecho === 'REALIZADA' ? {
             ...data,
-            // Remove campos da visita para não sujar o objeto de saúde
             resident_id: undefined, desfecho: undefined, data_visita: undefined, observacoes: undefined,
             
-            // Formata os Arrays corretamente para o Backend
             doencas_cardiacas_tipos: splitArray(data.doencas_cardiacas_tipos),
             problemas_rins_tipos: splitArray(data.problemas_rins_tipos),
             doenca_respiratoria_tipos: splitArray(data.doenca_respiratoria_tipos),
-            outras_condicoes: splitArray(data.outras_condicoes), // <--- Novo campo lista
+            outras_condicoes: splitArray(data.outras_condicoes), 
             origem_alimentacao: splitArray(data.origem_alimentacao),
             higiene_pessoal_tipos: splitArray(data.higiene_pessoal_tipos),
         } : null
@@ -114,11 +107,11 @@ export default function NewVisitWizard() {
         created_at: new Date()
       });
 
-      alert("Visita registrada com sucesso!");
+      toast.success("Visita registrada com sucesso!");
       navigate('/app/home');
     } catch (error) {
       console.error(error);
-      alert("Erro ao salvar visita.");
+      toast.error("Erro ao salvar visita.");
     } finally {
       setIsSaving(false);
     }

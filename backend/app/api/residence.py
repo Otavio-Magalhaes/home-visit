@@ -12,7 +12,6 @@ from app.schemas.residence_schema import ResidenciaCreate, ResidenciaResponse
 
 router = APIRouter(tags=["Residences"])
 
-
 @router.post("/", response_model=ResidenciaResponse)
 def create_residence(
     payload: ResidenciaCreate, 
@@ -23,12 +22,14 @@ def create_residence(
     if payload.latitude is not None and payload.longitude is not None:
         geo_point = WKTElement(f'POINT({payload.longitude} {payload.latitude})', srid=4326)
 
+    residencia_data = payload.dict()
+    residencia_data.pop('latitude', None)
+    residencia_data.pop('longitude', None)
+
     residencia = Residence(
         responsavel_id=current_user.id, 
-        
-        **payload.dict(), 
-        
         geo_location=geo_point,
+        **residencia_data 
     )
 
     db.add(residencia)
