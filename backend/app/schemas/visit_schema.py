@@ -24,4 +24,4 @@ class VisitResponse(VisitBase):
     health_situation: Optional[HealthSituationBase] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
