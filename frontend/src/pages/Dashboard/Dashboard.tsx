@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { api } from '../../lib/api';
-import { GoogleMapComponent } from '../../components/Map/GoogleMap';
 import { Flame, MapIcon } from 'lucide-react';
-import { useDashboard } from '../../components/layout/DashboardLayout';
-import { useDashboardMap } from '../../hooks/useDashboardMap';
-import { useDashboardStats } from '../../hooks/useDashboardStats';
-import KpiCard from '../../components/KpiCards';
+
+import GoogleMapComponent from '@/components/Map/GoogleMap.js';
+import { useDashboard } from '@/components/layout/DashboardLayout.js';
+import { useDashboardMap } from '@/hooks/useDashboardMap.js';
+import { useDashboardStats } from '@/hooks/useDashboardStats.js';
+import KpiCard from '@/components/KpiCards.js';
 
 // Tipagem
 type MapPin = {

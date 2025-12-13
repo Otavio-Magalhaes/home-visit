@@ -1,6 +1,7 @@
+import { api } from '@/libs/api.js';
+import { db } from '@/libs/db.js';
 import { useState, useEffect } from 'react';
-import { db } from '../lib/db';
-import { api } from '../lib/api';
+
 import { toast } from 'sonner';
 
 export function useSync() {

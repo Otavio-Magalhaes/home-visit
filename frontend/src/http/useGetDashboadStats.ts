@@ -1,5 +1,5 @@
-import type { FiltersType } from "../components/layout/Sidebar";
-import { api } from "../lib/api";
+import type { FiltersType } from "@/@types/index.js";
+import { api } from "@/libs/api.js";
 
 export type DashboardStats = {
   resultados: {
